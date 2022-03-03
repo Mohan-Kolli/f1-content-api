@@ -1,6 +1,18 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
+from pydantic import BaseModel
+from typing import Optional
+import data
 
 app = FastAPI()
+
+
+class Driver(BaseModel):
+    first_name: str
+    last_name: str
+    nationality: str
+    dob: str
+    url: str
+    comments: Optional[str] = None
 
 
 @app.get("/")
@@ -10,7 +22,7 @@ def root():
 
 @app.get("/driver")
 def get_all_drivers():
-    return {"drivers": "all"}
+    return data.drivers
 
 
 @app.get("/driver/{driver_id}")
@@ -19,13 +31,16 @@ def get_all_drivers(driver_id: int):
 
 
 @app.post("/driver")
-def add_new_driver():
-    return {"msg": "new driver added"}
+def add_new_driver(driver_details: Driver):
+    return driver_details
 
 
 @app.put("/driver/{driver_id}")
-def update_driver(driver_id: int):
-    return {"driver_id": driver_id, "msg": "Driver updated"}
+def update_driver(driver_id: int, first_name: Optional[str] = Query(None, max_length=50)):
+    result = {"driver_id": driver_id, "msg": "Driver updated"}
+    if first_name:
+        result.update({"first_name": first_name})
+    return result
 
 
 @app.delete("/driver/{driver_id}")

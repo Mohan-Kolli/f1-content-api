@@ -10,4 +10,4 @@ class Driver(Base):
     last_name = Column(String, nullable=False)
     nationality = Column(String, nullable=False)
     dob = Column(String, nullable=False)
-    url = Column()
+    url = Column(String, nullable=True)
