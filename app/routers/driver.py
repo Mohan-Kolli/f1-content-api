@@ -1,16 +1,18 @@
 from fastapi import FastAPI, APIRouter, Depends
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy.orm import Session
-from .. import schemas
+from .. import schemas, models
 from ..database import get_db
 
-app = FastAPI()
 
-api_router = APIRouter(
-    prefix="/driver"
+router = APIRouter(
+    prefix="/driver",
+    tags=['Drivers']
 )
 
 
-@app.get("/", response_model=schemas.DriverOut)
+@router.get("/")
 def get_drivers(drive: schemas.DriverCreate, db: Session = Depends(get_db)):
-    return db.query()
+    print("inside driver route")
+    print(db.query(models.Driver).all())
+    pass
