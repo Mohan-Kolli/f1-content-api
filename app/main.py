@@ -4,7 +4,6 @@ from .routers import driver
 
 from pydantic import BaseModel
 from typing import Optional
-import data
 
 app = FastAPI()
 

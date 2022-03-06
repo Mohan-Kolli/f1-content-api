@@ -1,11 +1,12 @@
 from pydantic import BaseModel
+from datetime import date
 
 
 class DriverBase(BaseModel):
     first_name: str
     last_name: str
     nationality: str
-    dob: str
+    dob: date
     url: str
 
 
