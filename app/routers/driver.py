@@ -23,7 +23,7 @@ def get_driver_by_id(driver_id: int, db: Session = Depends(get_db)):
     return driver
 
 
-# TODO Add conditions to stop duplicate driver entries
+# TODO Add conditions to stop duplicate driver entries*
 @router.post("", response_model=schemas.DriverOut)
 def create_driver(driver: schemas.DriverCreate, db: Session = Depends(get_db)):
     new_driver = models.Driver(**driver.dict())
