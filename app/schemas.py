@@ -1,5 +1,4 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional
+from pydantic import BaseModel
 
 
 class DriverBase(BaseModel):
@@ -14,10 +13,8 @@ class DriverCreate(DriverBase):
     pass
 
 
-class Driver(DriverBase):
+class DriverOut(DriverBase):
     id: int
 
     class Config:
         orm_mode = True
-
-
