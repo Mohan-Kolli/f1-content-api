@@ -1,0 +1,60 @@
+Yes, you can write a method in Java to delete a folder and all its subfolders and contents. This method can use the `java.nio.file` package, specifically `Files` and `FileVisitor` to traverse the directory structure and delete each file and directory.
+
+Here's a sample method that demonstrates how to achieve this:
+
+```java
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+
+public class DirectoryDeleter {
+
+    /**
+     * Deletes a directory and all its subdirectories and contents.
+     *
+     * @param dirPath the path to the directory to be deleted.
+     * @throws IOException if an I/O error occurs.
+     */
+    public static void deleteDirectory(Path dirPath) throws IOException {
+        // Create a FileVisitor to walk through the directory
+        Files.walkFileTree(dirPath, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                // Delete the file
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                // Delete the directory after visiting all its contents
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+
+    public static void main(String[] args) {
+        try {
+            // Define the path to the directory to be deleted
+            Path dirPath = Paths.get("path/to/directory");
+
+            // Delete the directory and its contents
+            deleteDirectory(dirPath);
+            System.out.println("Directory deleted successfully!");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the directory: " + e.getMessage());
+        }
+    }
+}
+```
+
+Here's how the code works:
+
+- The method `deleteDirectory` accepts a `Path` parameter representing the directory path to be deleted.
+- The method uses `Files.walkFileTree` to traverse the directory structure using a `SimpleFileVisitor`.
+- In the `visitFile` method, each file encountered is deleted using `Files.delete`.
+- In the `postVisitDirectory` method, each directory is deleted using `Files.delete` after visiting all its contents.
+- In the `main` method, you can specify the path to the directory you want to delete and call the `deleteDirectory` method.
+
+This program will recursively delete the specified directory and all its contents, including subdirectories and files. Adjust the directory path in the `main` method to specify the directory you want to delete.
