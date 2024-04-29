@@ -1,0 +1,116 @@
+Yes, you can write a Java program to perform the same functionality when the source is a shared drive that can be accessed using the SMBJ (Hierynomus) library, and the target is a local directory that can be written to using the java.nio library.
+
+Here's an example program that demonstrates how to achieve this:
+
+First, you need to add the smbj dependency to your pom.xml file if you're using Maven:
+
+xml
+<dependency>
+    <groupId>com.hierynomus</groupId>
+    <artifactId>smbj</artifactId>
+    <version>0.12.1</version>
+</dependency>
+
+
+Once you've set up the smbj library, here's the Java program that demonstrates how to copy files from a shared SMB drive to a local directory while only copying files with the .xsl extension:
+
+java
+import com.hierynomus.smbj.SMBClient;
+import com.hierynomus.smbj.connection.Connection;
+import com.hierynomus.smbj.share.DiskShare;
+import com.hierynomus.smbj.session.Session;
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+
+public class SMBDirectoryCopier {
+
+    public static void copySMBDirectory(String smbUrl, String smbUsername, String smbPassword, String smbPath, Path targetDir) throws IOException {
+        // Initialize SMB client
+        SMBClient client = new SMBClient();
+
+        // Parse the SMB URL to extract the hostname
+        String hostname = smbUrl.replace("smb://", "");
+
+        try (Connection connection = client.connect(hostname);
+             Session session = connection.authenticate(new com.hierynomus.smbj.auth.AuthenticationContext(smbUsername, smbPassword.toCharArray(), ""));
+             DiskShare diskShare = (DiskShare) session.connectShare("SHARE_NAME")) {
+
+            // Create the target directory if it does not exist
+            if (!Files.exists(targetDir)) {
+                Files.createDirectories(targetDir);
+            }
+
+            // Define a FileVisitor to walk through the SMB source directory
+            walkSMBDirectory(diskShare, smbPath, targetDir);
+        } catch (IOException e) {
+            System.err.println("An error occurred while copying the SMB directory: " + e.getMessage());
+        }
+    }
+
+    private static void walkSMBDirectory(DiskShare diskShare, String smbPath, Path targetDir) throws IOException {
+        // Iterate through each file and directory in the SMB path
+        for (FileIdBothDirectoryInfo info : diskShare.list(smbPath)) {
+            String fileName = info.getFileName();
+            String sourceFilePath = smbPath + "\\" + fileName;
+
+            if (fileName.equals(".") || fileName.equals("..")) {
+                continue; // Skip current and parent directory entries
+            }
+
+            // Determine if the file is a directory
+            boolean isDirectory = info.isDirectory();
+
+            if (isDirectory) {
+                // Create the corresponding local directory
+                Path targetSubDir = targetDir.resolve(fileName);
+                if (!Files.exists(targetSubDir)) {
+                    Files.createDirectories(targetSubDir);
+                }
+                // Recursively walk through the SMB directory
+                walkSMBDirectory(diskShare, sourceFilePath, targetSubDir);
+            } else {
+                // Check if the file has a .xsl extension
+                if (fileName.endsWith(".xsl")) {
+                    // Define the target file path
+                    Path targetFile = targetDir.resolve(fileName);
+                    // Copy the file from SMB to the local target
+                    try (InputStream inputStream = diskShare.openFile(sourceFilePath, AccessMask.GENERIC_READ, ShareAccess.ALL, CreateDisposition.FILE_OPEN, FileAttributes.FILE_ATTRIBUTE_NORMAL);
+                         OutputStream outputStream = Files.newOutputStream(targetFile)) {
+                        inputStream.transferTo(outputStream);
+                    }
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        try {
+            // Define SMB connection parameters
+            String smbUrl = "smb://smb-hostname";
+            String smbUsername = "your-username";
+            String smbPassword = "your-password";
+            String smbPath = "\\shared\\directory\\path";
+
+            // Define the target directory
+            Path targetDir = Paths.get("path/to/local/target/directory");
+
+            // Copy the SMB directory and its .xsl files to the local directory
+            copySMBDirectory(smbUrl, smbUsername, smbPassword, smbPath, targetDir);
+            System.out.println("SMB directory copied successfully!");
+        } catch (IOException e) {
+            System.err.println("An error occurred while copying the SMB directory: " + e.getMessage());
+        }
+    }
+}
+
+
+Here's how the code works:
+
+- The program begins with a main method, where you define the SMB connection parameters (smbUrl, smbUsername, smbPassword, and smbPath) and the target directory for the local copy.
+- The copySMBDirectory method initializes an SMB client and connects to the specified SMB drive using the provided credentials.
+- Once connected, the method uses walkSMBDirectory to iterate through the SMB source directory.
+- If a file is found and it has a .xsl extension, it is copied to the target directory using input and output streams.
+- If a directory is found, the program recursively walks through that directory.
+
+This approach demonstrates how you can use the SMBJ library to access a shared SMB drive and perform file operations, while the java.nio library handles local file operations such as writing files and creating directories. Adjust the code and parameters as needed to suit your use case.
